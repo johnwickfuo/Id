@@ -1,0 +1,27 @@
+[Unit]
+Description=Driver License Generator backend (Ktor)
+After=network.target
+
+[Service]
+Type=simple
+User=admin
+Group=admin
+
+# Where the built application lives on the server.
+WorkingDirectory=/home/admin/apps/driver-license-generator
+
+# Run the fat/uber JAR. Build it first with:  ./gradlew build
+# then copy build/libs/<name>-all.jar here as driver-license-generator.jar
+ExecStart=/usr/bin/java -jar /home/admin/apps/driver-license-generator/driver-license-generator.jar
+
+# The app binds to 127.0.0.1:8080 (hardcoded in Application.kt).
+# nginx proxies /generate and /validate to it.
+Environment=JAVA_OPTS=-Xmx256m
+
+# Ktor/Netty exits with 143 on SIGTERM; treat that as clean.
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

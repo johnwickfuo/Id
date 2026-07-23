@@ -3,7 +3,7 @@ document.getElementById('generateBtn').addEventListener('click', () => {
     const firstName = document.getElementById('firstName').value;
     const lastName = document.getElementById('lastName').value;
 
-    fetch('http://localhost:8080/generate', {
+    fetch('/generate', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

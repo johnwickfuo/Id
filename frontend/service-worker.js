@@ -4,7 +4,7 @@ const urlsToCache = [
     '/index.html',
     '/styles.css',
     '/app.js',
-    '/https://cdn.jsdelivr.net/npm/pdf417-js@1.1.0/pdf417.min.js'
+    'https://cdn.jsdelivr.net/npm/pdf417-js@1.1.0/pdf417.min.js'
 ];
 
 self.addEventListener('install', event => {
@@ -13,9 +13,6 @@ self.addEventListener('install', event => {
         .then(cache => {
             console.log('Opened cache');
             return cache.addAll(urlsToCache);
-       **`service-worker.js` (continued)**
-
-```javascript
         })
     );
 });
@@ -32,4 +29,3 @@ self.addEventListener('fetch', event => {
         })
     );
 });
-<!-- // 💡✌🏾 In the End, He made them Open-Source 💜❤️ // -->
