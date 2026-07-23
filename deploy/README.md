@@ -58,15 +58,15 @@ nginx -t && systemctl reload nginx
 
 ## 3. Build & run the backend
 
-> ⚠️ **The backend does not compile as-is** — see "Known backend issues"
-> below. Fix those first, then:
+The backend is a self-contained Ktor app. Build the fat JAR (requires
+JDK 17+; the Gradle wrapper is included, so no system Gradle needed):
 
 ```bash
-cd /tmp/id-deploy/backend/src
-./gradlew build            # requires JDK 17+ ; produces a JAR in build/libs/
+cd /tmp/id-deploy/backend
+./gradlew buildFatJar       # produces build/libs/driver-license-generator-all.jar
 
 mkdir -p /home/admin/apps/driver-license-generator
-cp build/libs/*-all.jar \
+cp build/libs/driver-license-generator-all.jar \
   /home/admin/apps/driver-license-generator/driver-license-generator.jar
 
 # Install the service
@@ -89,23 +89,32 @@ Then load `https://id.africodeai.online/` and click **Generate**.
 
 ---
 
-## Known backend issues (must fix before step 3 works)
+## Backend notes
 
-The imported backend is a rough draft and will not build without changes:
+The backend was rewritten so it actually builds and runs (the original
+import did not compile). What changed:
 
-1. **No Gradle wrapper** — there's no `gradlew` script or
-   `gradle-wrapper.jar`, so `./gradlew` won't exist. Run `gradle wrapper`
-   once (with a system Gradle) to generate them, or use a system `gradle`.
-2. **`Application.kt` is not valid Kotlin:**
-   - Line 1 is an HTML comment (`<!-- ... -->`).
-   - The package name `com.papaguycodes.driver-license-generator` contains
-     hyphens, which Kotlin does not allow in package identifiers.
-   - The Ktor imports are 1.x-style but the build requests Ktor 2.5.0
-     (which also isn't a real release — latest 2.x is 2.3.x).
-   - `validateLicenseNumber` uses JavaScript/Python regex-literal and map
-     syntax (`'AL': /^.../,`) that is not Kotlin.
-3. **Odd project layout** — `build.gradle.kts` lives under `backend/src/`
-   rather than `backend/`.
+- Standard Gradle layout: `build.gradle.kts` / `settings.gradle.kts` at
+  `backend/`, sources under `backend/src/main/kotlin`.
+- Gradle wrapper committed (`./gradlew`), so no system Gradle is required.
+- Kotlin 1.9.24 + Ktor 2.3.12, targeting JVM 17.
+- Valid package name `com.africodeai.id`.
+- `generate` and `validate` reimplemented as idiomatic Kotlin; the
+  per-state validation patterns are a Kotlin `Map<String, Regex>`.
+- A small JUnit test suite (`./gradlew test`).
 
-I can fix all of this in a follow-up if you'd like a backend that actually
-builds and runs.
+Build/verify locally:
+
+```bash
+cd backend
+./gradlew test          # runs the unit tests
+./gradlew buildFatJar   # builds build/libs/driver-license-generator-all.jar
+java -jar build/libs/driver-license-generator-all.jar   # serves on 127.0.0.1:8080
+```
+
+### API
+
+| Method | Path        | Body                                          | Response                       |
+|--------|-------------|-----------------------------------------------|--------------------------------|
+| POST   | `/generate` | `{"state","firstName","lastName"}`            | `{"licenseNumber":"CA-JD-…"}`  |
+| POST   | `/validate` | `{"state","licenseNumber"}`                   | `{"valid":true|false}`         |
